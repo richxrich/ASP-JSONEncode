@@ -1,6 +1,10 @@
+<!--#include virtual="/lib/class_StringBuffer.asp"-->
 <script language="javascript" runat="server">
 /**
 * jsonencode.asp
+*
+* 2022: Re-wrote parts to use string buffers for speed
+*
 *
 * JavaScript function for encoding strings for JSON
 * using fast JavaScript callbacks on a single regular expression search/replace per string
@@ -94,33 +98,35 @@ End Function
 ' @return string
 '-----------------------------------------------------------------------
 Function JSONEncodeDict(ByVal elementName, ByVal dict)
-	Dim i, delim
+	Dim i, delim, O
+	Set O = new StringBuffer
 
-	JSONEncodeDict = """" & JSONEncodeString(elementName) & """:{"
+	O.Append """" & JSONEncodeString(elementName) & """:{"
 	delim = ""
 	For Each i In dict
-		JSONEncodeDict = JSONEncodeDict & delim
+		O.Append delim
 		Select Case VarType(dict(i))
 		Case vbObject
-			JSONEncodeDict = JSONEncodeDict & JSONEncodeDict(i, dict(i))
+			O.Append JSONEncodeDict(i, dict(i))
 		Case vbNull
-			JSONEncodeDict = JSONEncodeDict & """" & JSONEncodeString(i) & """:null"
+			O.Append """" & JSONEncodeString(i) & """:null"
 		Case vbInteger, vbLong, vbSingle, vbDouble, vbCurrency, vbByte
-			JSONEncodeDict = JSONEncodeDict & """" & JSONEncodeString(i) & """:" & dict(i)
+			O.Append """" & JSONEncodeString(i) & """:" & dict(i)
 		Case vbDate
-			JSONEncodeDict = JSONEncodeDict & """" & JSONEncodeString(i) & """:" & JSONEncodeDate(dict(i))
+			O.Append """" & JSONEncodeString(i) & """:" & JSONEncodeDate(dict(i))
 		Case vbBoolean
-			JSONEncodeDict = JSONEncodeDict & """" & JSONEncodeString(i) & """:" & LCase(dict(i))
+			O.Append """" & JSONEncodeString(i) & """:" & LCase(dict(i))
 		Case Else
 			If IsArray(dict(i)) Then
-				JSONEncodeDict = JSONEncodeDict & """" & JSONEncodeString(i) & """:" & JSONEncodeArray(dict(i))
+				O.Append """" & JSONEncodeString(i) & """:" & JSONEncodeArray(dict(i))
 			Else
-				JSONEncodeDict = JSONEncodeDict & """" & JSONEncodeString(i) & """:""" & JSONEncodeString(dict(i)) & """"
+				O.Append """" & JSONEncodeString(i) & """:""" & JSONEncodeString(dict(i)) & """"
 			End If
 		End Select
 		delim = ","
 	Next
-	JSONEncodeDict = JSONEncodeDict & "}"
+	O.Append "}"
+	JSONEncodeDict = O.tostring()
 End Function
 
 '-----------------------------------------------------------------------
@@ -130,35 +136,36 @@ End Function
 ' @return string
 '-----------------------------------------------------------------------
 Function JSONEncodeArray(ByVal arr)
-	Dim i, delim
+	Dim i, delim, O
+	Set O = new StringBuffer
 
-	JSONEncodeArray = "["
+	O.Append "["
 	delim = ""
 	For i = LBound(arr) To UBound(arr)
-		JSONEncodeArray = JSONEncodeArray & delim
+		O.Append delim
 
 		Select Case VarType(arr(i))
 		Case vbObject
-			JSONEncodeArray = JSONEncodeArray & JSONEncodeDict(i, arr(i))
+			O.Append JSONEncodeDict(i, arr(i))
 		Case vbNull
-			JSONEncodeArray = JSONEncodeArray & "null"
+			O.Append "null"
 		Case vbInteger, vbLong, vbSingle, vbDouble, vbCurrency, vbByte
-			JSONEncodeArray = JSONEncodeArray & arr(i)
+			O.Append arr(i)
 		Case vbDate
-			JSONEncodeArray = JSONEncodeArray & JSONEncodeDate(arr(i))
+			O.Append JSONEncodeDate(arr(i))
 		Case vbBoolean
-			JSONEncodeArray = JSONEncodeArray & LCase(arr(i))
+			O.Append LCase(arr(i))
 		Case Else
 			If IsArray(arr(i)) Then
-				JSONEncodeArray = JSONEncodeArray & JSONEncodeArray(arr(i))
+				O.Append JSONEncodeArray(arr(i))
 			Else
-				JSONEncodeArray = JSONEncodeArray & """" & JSONEncodeString(arr(i)) & """"
+				O.Append """" & JSONEncodeString(arr(i)) & """"
 			End If
 		End Select
 
 		delim = ","
 	Next
-	JSONEncodeArray = JSONEncodeArray & "]"
+	O.Append "]"
+	JSONEncodeArray = O.tostring()
 End Function
-
 </script>
