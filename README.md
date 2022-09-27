@@ -1,5 +1,7 @@
 # JSONEncode
 
+2022: Couldn't find my own functions so modded this and made changes to use a string buffer for a massive speed increase.
+
 Functions for encoding strings, dates, arrays and dictionaries for JSON in Classic ASP. String encoding uses fast JavaScript regular expression search/replace.
 
 ## Usage
